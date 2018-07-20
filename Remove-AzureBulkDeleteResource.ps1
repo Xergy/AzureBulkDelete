@@ -92,7 +92,7 @@ BEGIN {
 } #End BulkDeleteResource
 
 
-Write-Host "Performing Remove-AzureRmResource -WhatIF on all selected resouces" -ForegroundColor Cyan
+Write-Host "Performing Remove-AzureRmResource -WhatIF on all selected resouces to incite fear" -ForegroundColor Cyan
 Start-Sleep -Seconds 10
 
 BulkDeleteResource $ResourceSelection
