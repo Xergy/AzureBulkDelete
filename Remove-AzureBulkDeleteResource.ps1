@@ -1,6 +1,12 @@
 
 $VerbosePreference =  "SilentlyContinue"
 
+#If not logged in to Azure, start login
+if ($Null -eq (Get-AzureRmContext).Account) {
+    $AzureEnv = Get-AzureRmEnvironment | Select-Object -Property Name  | 
+    Out-GridView -Title "Choose your Azure environment.  NOTE: For Azure Commercial choose AzureCloud" -OutputMode Single
+    Connect-AzureRmAccount -Environment $AzureEnv.Name }
+
 $SubSelection = Get-AzureRmSubscription | Out-GridView -Title "Select a Subscription" -OutputMode Single
 
 Set-AzureRmContext -Subscription $SubSelection
@@ -12,8 +18,6 @@ $ResourceSelection =  Get-AzureRmResource -ResourceGroupName $RGSelection.Resour
 $ResourceSelection =  $ResourceSelection | Out-GridView -Title "Re-Select Resources to Remove" -OutputMode Multiple
 
 If ($ResourceSelection.Count -eq 0) {Break}
-
-#$VerbosePreference = "continue"
 
 Function BulkDeleteResource {
 [CmdletBinding()]
@@ -97,12 +101,10 @@ Start-Sleep -Seconds 10
 
 BulkDeleteResource $ResourceSelection
 
-Write-Host "Type ""BreakGlass"" to Remove Resources, or Ctrl-C to Exit" -ForegroundColor Green
-Read-Host "Final Answer" $HostInput
+Write-Host "`nType ""BreakGlass"" to Remove Resources, or Ctrl-C to Exit" -ForegroundColor Green
+$HostInput = $Null
+$HostInput = Read-Host "Final Answer" 
 If ($HostInput = "BreakGlass" ) {
     BulkDeleteResource $ResourceSelection -BreakGlass
 }
-
-
-
 
