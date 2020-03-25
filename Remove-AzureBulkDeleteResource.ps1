@@ -2,18 +2,18 @@
 $VerbosePreference =  "SilentlyContinue"
 
 #If not logged in to Azure, start login
-if ($Null -eq (Get-AzureRmContext).Account) {
-    $AzureEnv = Get-AzureRmEnvironment | Select-Object -Property Name  | 
+if ($Null -eq (Get-AzContext).Account) {
+    $AzureEnv = Get-AzEnvironment | Select-Object -Property Name  | 
     Out-GridView -Title "Choose your Azure environment.  NOTE: For Azure Commercial choose AzureCloud" -OutputMode Single
-    Connect-AzureRmAccount -Environment $AzureEnv.Name }
+    Connect-AzAccount -Environment $AzureEnv.Name }
 
-$SubSelection = Get-AzureRmSubscription | Out-GridView -Title "Select a Subscription" -OutputMode Single
+$SubSelection = Get-AzSubscription | Out-GridView -Title "Select a Subscription" -OutputMode Single
 
-Set-AzureRmContext -Subscription $SubSelection
+Set-AzContext -Subscription $SubSelection
 
-$RGSelection = Get-AzureRmResourceGroup  | Out-GridView -Title "Select Resource Group" -OutputMode Single
+$RGSelection = Get-AzResourceGroup  | Out-GridView -Title "Select Resource Group" -OutputMode Single
 
-$ResourceSelection =  Get-AzureRmResource -ResourceGroupName $RGSelection.ResourceGroupName  | Out-GridView -Title "Select Resources to Remove" -OutputMode Multiple
+$ResourceSelection =  Get-AzResource -ResourceGroupName $RGSelection.ResourceGroupName  | Out-GridView -Title "Select Resources to Remove" -OutputMode Multiple 
 
 $ResourceSelection =  $ResourceSelection | Out-GridView -Title "Re-Select Resources to Remove" -OutputMode Multiple
 
@@ -59,19 +59,20 @@ BEGIN {
                     Write-Verbose "Deleting $($_.Name)"
                     If ($BreakGlass -eq $True) 
                     {
-                        $_ | Remove-AzureRmResource -Force 
+                        $_ | Remove-AzResource -Force 
                     } 
                         Else 
                         {
-                            $_ | Remove-AzureRmResource -Force -WhatIf 
+                            $_ | Remove-AzResource -Force -WhatIf 
                         }
                 }
 
             $ResourcesToRemove = $ResourcesToRemove | Where-Object { $_.Resourcetype -ne $ManagedResourceType}
         }
 
-        If ($ResourcesToRemove.Count -gt 0)
+        If ($ResourcesToRemove.Count -gt 0) 
         {
+
             Write-Verbose "Processing Resource Type OTHER"
             $ResourcesToRemove | 
                 ForEach-Object {
@@ -79,16 +80,13 @@ BEGIN {
     
                     If ($BreakGlass -eq $True) 
                     {
-                        $_ | Remove-AzureRmResource -Force 
+                        $_ | Remove-AzResource -Force 
                     }
                         Else
                         {
-                            $_ | Remove-AzureRmResource -Force -WhatIf 
+                            $_ | Remove-AzResource -Force -WhatIf 
                         }
                 }
-    
-            $ResourcesToRemove = $null
-    
         }
 
     } #End PROCESS
@@ -96,15 +94,25 @@ BEGIN {
 } #End BulkDeleteResource
 
 
-Write-Host "Performing Remove-AzureRmResource -WhatIF on all selected resouces to incite fear" -ForegroundColor Cyan
+Write-Host "Performing Remove-AzResource -WhatIF on all selected resouces to incite fear" -ForegroundColor Cyan
 Start-Sleep -Seconds 10
 
 BulkDeleteResource $ResourceSelection
 
+If ($ResourceSelection) {
+    Write-Host "Resources selected for deletion:"
+    $ResourceSelection | ft -Property Name,ResourceGroupName,Location,ResourceType
+}
+
+Write-Host "Number of resources selected for deletion: $($ResourceSelection.Count)"
+
 Write-Host "`nType ""BreakGlass"" to Remove Resources, or Ctrl-C to Exit" -ForegroundColor Green
 $HostInput = $Null
 $HostInput = Read-Host "Final Answer" 
-If ($HostInput = "BreakGlass" ) {
+If ($HostInput -eq "BreakGlass" ) {
     BulkDeleteResource $ResourceSelection -BreakGlass
+} Else {
+    Write-Host "Existing..."    
+    Break
 }
 
