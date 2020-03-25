@@ -101,7 +101,7 @@ BulkDeleteResource $ResourceSelection
 
 If ($ResourceSelection) {
     Write-Host "Resources selected for deletion:"
-    $ResourceSelection | ft -Property Name,ResourceGroupName,Location,ResourceType
+    $ResourceSelection | ft -Property Name,ResourceGroupName,Location,ResourceType -AutoSize
 }
 
 Write-Host "Number of resources selected for deletion: $($ResourceSelection.Count)"
