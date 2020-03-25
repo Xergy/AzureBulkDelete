@@ -1,24 +1,5 @@
 
 $VerbosePreference =  "SilentlyContinue"
-
-#If not logged in to Azure, start login
-if ($Null -eq (Get-AzContext).Account) {
-    $AzureEnv = Get-AzEnvironment | Select-Object -Property Name  | 
-    Out-GridView -Title "Choose your Azure environment.  NOTE: For Azure Commercial choose AzureCloud" -OutputMode Single
-    Connect-AzAccount -Environment $AzureEnv.Name }
-
-$SubSelection = Get-AzSubscription | Out-GridView -Title "Select a Subscription" -OutputMode Single
-
-Set-AzContext -Subscription $SubSelection
-
-$RGSelection = Get-AzResourceGroup  | Out-GridView -Title "Select Resource Group" -OutputMode Single
-
-$ResourceSelection =  Get-AzResource -ResourceGroupName $RGSelection.ResourceGroupName  | Out-GridView -Title "Select Resources to Remove" -OutputMode Multiple 
-
-$ResourceSelection =  $ResourceSelection | Out-GridView -Title "Re-Select Resources to Remove" -OutputMode Multiple
-
-If ($ResourceSelection.Count -eq 0) {Break}
-
 Function BulkDeleteResource {
 [CmdletBinding()]
 
@@ -93,6 +74,23 @@ BEGIN {
 
 } #End BulkDeleteResource
 
+#If not logged in to Azure, start login
+if ($Null -eq (Get-AzContext).Account) {
+    $AzureEnv = Get-AzEnvironment | Select-Object -Property Name  | 
+    Out-GridView -Title "Choose your Azure environment.  NOTE: For Azure Commercial choose AzureCloud" -OutputMode Single
+    Connect-AzAccount -Environment $AzureEnv.Name }
+
+$SubSelection = Get-AzSubscription | Out-GridView -Title "Select a Subscription" -OutputMode Single
+
+Set-AzContext -Subscription $SubSelection
+
+$RGSelection = Get-AzResourceGroup  | Out-GridView -Title "Select Resource Group" -OutputMode Single
+
+$ResourceSelection =  Get-AzResource -ResourceGroupName $RGSelection.ResourceGroupName  | Out-GridView -Title "Select Resources to Remove" -OutputMode Multiple 
+
+$ResourceSelection =  $ResourceSelection | Out-GridView -Title "Re-Select Resources to Remove" -OutputMode Multiple
+
+If ($ResourceSelection.Count -eq 0) {Break}
 
 Write-Host "Performing Remove-AzResource -WhatIF on all selected resouces to incite fear" -ForegroundColor Cyan
 Start-Sleep -Seconds 10
