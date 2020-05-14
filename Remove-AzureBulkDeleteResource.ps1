@@ -30,8 +30,13 @@ BEGIN {
     PROCESS 
     {
 
+        Write-Verbose "Cleaning up any old jobs..."
+        Get-Job | Remove-Job 
+        
         foreach ($ManagedResourceType in $ManagedResourceTypes)
         {
+
+
             Write-Verbose "Processing Resource Type $($ManagedResourcetype)"
 
             $ResourcesToRemove |
@@ -40,13 +45,22 @@ BEGIN {
                     Write-Verbose "Deleting $($_.Name)"
                     If ($BreakGlass -eq $True) 
                     {
-                        $_ | Remove-AzResource -Force 
+                        $_ | Remove-AzResource -Force -AsJob
+                     
                     } 
                         Else 
                         {
                             $_ | Remove-AzResource -Force -WhatIf 
                         }
                 }
+            If ($ResourcesToRemove | Where-Object { $_.Resourcetype -eq $ManagedResourceType}) {
+                Write-Verbose "Waiting from removal jobs to complete..."
+                Get-Job | Wait-Job
+                Write-Verbose "Receiving Jobs..."
+                Get-Job | Receive-Job
+                Write-Verbose "Jobs are done!" 
+                Get-Job | Remove-Job  
+            } 
 
             $ResourcesToRemove = $ResourcesToRemove | Where-Object { $_.Resourcetype -ne $ManagedResourceType}
         }
@@ -61,13 +75,23 @@ BEGIN {
     
                     If ($BreakGlass -eq $True) 
                     {
-                        $_ | Remove-AzResource -Force 
+                        $_ | Remove-AzResource -Force -AsJob
+     
                     }
                         Else
                         {
                             $_ | Remove-AzResource -Force -WhatIf 
                         }
                 }
+
+            If ($ResourcesToRemove) {
+                Write-Verbose "Waiting from removal jobs to complete..."
+                Get-Job | Wait-Job
+                Write-Verbose "Receiving Jobs..."
+                Get-Job | Receive-Job
+                Write-Verbose "Jobs are done!" 
+                Get-Job | Remove-Job  
+            } 
         }
 
     } #End PROCESS
